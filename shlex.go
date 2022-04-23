@@ -116,7 +116,7 @@ const (
 	quotingEscapingState                   // we are within a quoted string that supports escaping ("...")
 	quotingState                           // we are within a string that does not support escaping ('...')
 	commentState                           // we are within a comment (everything following an unquoted or unescaped #
-
+	arrayState                             // we are within a JSON array (everything between '[' and ']')
 )
 
 // tokenClassifier is used for classifying rune characters.
@@ -240,6 +240,12 @@ func (t *Tokenizer) scanStream() (*Token, error) {
 					{
 						tokenType = CommentToken
 						state = commentState
+					}
+				case openBraceClass:
+					{
+						tokenType = ArrayToken
+						state = arrayState
+						value = append(value, nextRune)
 					}
 				default:
 					{
@@ -392,6 +398,33 @@ func (t *Tokenizer) scanStream() (*Token, error) {
 					{
 						value = append(value, nextRune)
 					}
+				}
+			}
+		case arrayState:
+			{
+				switch nextRuneType {
+				case eofRuneClass:
+					{
+						err = fmt.Errorf("EOF found when expecting closing brace")
+
+						token := &Token{
+							tokenType: tokenType,
+							value:     string(value)}
+
+						return token, err
+					}
+				case closeBraceClass:
+					state = startState
+					value = append(value, nextRune)
+
+					token := &Token{
+						tokenType: tokenType,
+						value:     string(value),
+					}
+
+					return token, err
+				default:
+					value = append(value, nextRune)
 				}
 			}
 		default:
