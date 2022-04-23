@@ -1,2 +1,5 @@
 go-shlex is a simple lexer for go that supports shell-style quoting,
 commenting, and escaping.
+
+this fork aims to group JSON arrays as a single element rathern than
+multiple.
