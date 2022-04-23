@@ -164,7 +164,7 @@ func (l *Lexer) Next() (string, error) {
 			return "", err
 		}
 		switch token.tokenType {
-		case WordToken:
+		case WordToken, ArrayToken:
 			return token.value, nil
 		case CommentToken:
 			// skip comments
