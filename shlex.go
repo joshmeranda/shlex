@@ -81,6 +81,8 @@ const (
 	nonEscapingQuoteRunes = "'"
 	escapeRunes           = `\`
 	commentRunes          = "#"
+	openBraceRunes        = "["
+	closeBraceRunes       = "]"
 )
 
 // Classes of rune token
@@ -92,6 +94,8 @@ const (
 	escapeRuneClass
 	commentRuneClass
 	eofRuneClass
+	openBraceClass
+	closeBraceClass
 )
 
 // Classes of lexographic token
@@ -100,6 +104,7 @@ const (
 	WordToken
 	SpaceToken
 	CommentToken
+	ArrayToken
 )
 
 // Lexer state machine states
@@ -111,6 +116,7 @@ const (
 	quotingEscapingState                   // we are within a quoted string that supports escaping ("...")
 	quotingState                           // we are within a string that does not support escaping ('...')
 	commentState                           // we are within a comment (everything following an unquoted or unescaped #
+	arrayState                             // we are within a JSON array (everything between '[' and ']')
 )
 
 // tokenClassifier is used for classifying rune characters.
@@ -130,10 +136,12 @@ func newDefaultClassifier() tokenClassifier {
 	t.addRuneClass(nonEscapingQuoteRunes, nonEscapingQuoteRuneClass)
 	t.addRuneClass(escapeRunes, escapeRuneClass)
 	t.addRuneClass(commentRunes, commentRuneClass)
+	t.addRuneClass(openBraceRunes, openBraceClass)
+	t.addRuneClass(closeBraceRunes, closeBraceClass)
 	return t
 }
 
-// ClassifyRune classifiees a rune
+// ClassifyRune classifies a rune
 func (t tokenClassifier) ClassifyRune(runeVal rune) runeTokenClass {
 	return t[runeVal]
 }
@@ -156,7 +164,7 @@ func (l *Lexer) Next() (string, error) {
 			return "", err
 		}
 		switch token.tokenType {
-		case WordToken:
+		case WordToken, ArrayToken:
 			return token.value, nil
 		case CommentToken:
 			// skip comments
@@ -232,6 +240,12 @@ func (t *Tokenizer) scanStream() (*Token, error) {
 					{
 						tokenType = CommentToken
 						state = commentState
+					}
+				case openBraceClass:
+					{
+						tokenType = ArrayToken
+						state = arrayState
+						value = append(value, nextRune)
 					}
 				default:
 					{
@@ -384,6 +398,33 @@ func (t *Tokenizer) scanStream() (*Token, error) {
 					{
 						value = append(value, nextRune)
 					}
+				}
+			}
+		case arrayState:
+			{
+				switch nextRuneType {
+				case eofRuneClass:
+					{
+						err = fmt.Errorf("EOF found when expecting closing brace")
+
+						token := &Token{
+							tokenType: tokenType,
+							value:     string(value)}
+
+						return token, err
+					}
+				case closeBraceClass:
+					state = startState
+					value = append(value, nextRune)
+
+					token := &Token{
+						tokenType: tokenType,
+						value:     string(value),
+					}
+
+					return token, err
+				default:
+					value = append(value, nextRune)
 				}
 			}
 		default:

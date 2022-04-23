@@ -24,7 +24,7 @@ import (
 var (
 	// one two "three four" "five \"six\"" seven#eight # nine # ten
 	// eleven 'twelve\'
-	testString = "one two \"three four\" \"five \\\"six\\\"\" seven#eight # nine # ten\n eleven 'twelve\\' thirteen=13 fourteen/14"
+	testString = "one two \"three four\" \"five \\\"six\\\"\" seven#eight # nine # ten\n eleven 'twelve\\' thirteen=13 fourteen/14 [] [\"gandalf\"] [\"gandalf\", \"bilbo baggins\"] a[\"gandalf\"]b"
 )
 
 func TestClassifier(t *testing.T) {
@@ -33,7 +33,10 @@ func TestClassifier(t *testing.T) {
 		' ':  spaceRuneClass,
 		'"':  escapingQuoteRuneClass,
 		'\'': nonEscapingQuoteRuneClass,
-		'#':  commentRuneClass}
+		'#':  commentRuneClass,
+		'[':  openBraceClass,
+		']':  closeBraceClass,
+	}
 	for runeChar, want := range tests {
 		got := classifier.ClassifyRune(runeChar)
 		if got != want {
@@ -54,7 +57,12 @@ func TestTokenizer(t *testing.T) {
 		&Token{WordToken, "eleven"},
 		&Token{WordToken, "twelve\\"},
 		&Token{WordToken, "thirteen=13"},
-		&Token{WordToken, "fourteen/14"}}
+		&Token{WordToken, "fourteen/14"},
+		&Token{ArrayToken, "[]"},
+		&Token{ArrayToken, "[\"gandalf\"]"},
+		&Token{ArrayToken, "[\"gandalf\", \"bilbo baggins\"]"},
+		&Token{WordToken, "a[gandalf]b"},
+	}
 
 	tokenizer := NewTokenizer(testInput)
 	for i, want := range expectedTokens {
@@ -70,7 +78,7 @@ func TestTokenizer(t *testing.T) {
 
 func TestLexer(t *testing.T) {
 	testInput := strings.NewReader(testString)
-	expectedStrings := []string{"one", "two", "three four", "five \"six\"", "seven#eight", "eleven", "twelve\\", "thirteen=13", "fourteen/14"}
+	expectedStrings := []string{"one", "two", "three four", "five \"six\"", "seven#eight", "eleven", "twelve\\", "thirteen=13", "fourteen/14", "[]", "[\"gandalf\"]", "[\"gandalf\", \"bilbo baggins\"]", "a[gandalf]b"}
 
 	lexer := NewLexer(testInput)
 	for i, want := range expectedStrings {
@@ -85,7 +93,7 @@ func TestLexer(t *testing.T) {
 }
 
 func TestSplit(t *testing.T) {
-	want := []string{"one", "two", "three four", "five \"six\"", "seven#eight", "eleven", "twelve\\", "thirteen=13", "fourteen/14"}
+	want := []string{"one", "two", "three four", "five \"six\"", "seven#eight", "eleven", "twelve\\", "thirteen=13", "fourteen/14", "[]", "[\"gandalf\"]", "[\"gandalf\", \"bilbo baggins\"]", "a[gandalf]b"}
 	got, err := Split(testString)
 	if err != nil {
 		t.Error(err)
