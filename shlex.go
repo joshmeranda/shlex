@@ -81,6 +81,8 @@ const (
 	nonEscapingQuoteRunes = "'"
 	escapeRunes           = `\`
 	commentRunes          = "#"
+	openBraceRunes        = "["
+	closeBraceRunes       = "]"
 )
 
 // Classes of rune token
@@ -134,10 +136,12 @@ func newDefaultClassifier() tokenClassifier {
 	t.addRuneClass(nonEscapingQuoteRunes, nonEscapingQuoteRuneClass)
 	t.addRuneClass(escapeRunes, escapeRuneClass)
 	t.addRuneClass(commentRunes, commentRuneClass)
+	t.addRuneClass(openBraceRunes, openBraceClass)
+	t.addRuneClass(closeBraceRunes, closeBraceClass)
 	return t
 }
 
-// ClassifyRune classifiees a rune
+// ClassifyRune classifies a rune
 func (t tokenClassifier) ClassifyRune(runeVal rune) runeTokenClass {
 	return t[runeVal]
 }
