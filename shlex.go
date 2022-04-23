@@ -92,6 +92,8 @@ const (
 	escapeRuneClass
 	commentRuneClass
 	eofRuneClass
+	openBraceClass
+	closeBraceClass
 )
 
 // Classes of lexographic token
@@ -100,6 +102,7 @@ const (
 	WordToken
 	SpaceToken
 	CommentToken
+	ArrayToken
 )
 
 // Lexer state machine states
@@ -111,6 +114,7 @@ const (
 	quotingEscapingState                   // we are within a quoted string that supports escaping ("...")
 	quotingState                           // we are within a string that does not support escaping ('...')
 	commentState                           // we are within a comment (everything following an unquoted or unescaped #
+
 )
 
 // tokenClassifier is used for classifying rune characters.
